@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error Budget Calculator - OpsKit</title>
+  <meta name="description" content="Estimate allowed failures, remaining error budget, and burn rate from real request and incident data.">
+  <meta name="keywords" content="error budget calculator, SLO burn rate, reliability budget">
+  <link rel="canonical" href="https://devtoolbox.dedyn.io/opskit/error-budget-calculator.html">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Error Budget Calculator - OpsKit">
+  <meta property="og:description" content="Model SLO error budget usage and burn risk.">
+  <meta property="og:url" content="https://devtoolbox.dedyn.io/opskit/error-budget-calculator.html">
+  <meta property="og:site_name" content="OpsKit">
+  <meta property="og:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Error Budget Calculator - OpsKit">
+  <meta name="twitter:description" content="Model SLO error budget usage and burn risk.">
+  <meta name="twitter:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <link rel="stylesheet" href="/opskit/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "OpsKit Error Budget Calculator",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "url": "https://devtoolbox.dedyn.io/opskit/error-budget-calculator.html"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "OpsKit",
+            "item": "https://devtoolbox.dedyn.io/opskit/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Error Budget Calculator",
+            "item": "https://devtoolbox.dedyn.io/opskit/error-budget-calculator.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <div class="site-wrap">
+    <header class="topbar">
+      <a class="brand" href="/opskit/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span>OpsKit</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/opskit/">Home</a>
+        <a href="/opskit/sla-downtime-calculator.html">SLA Downtime</a>
+        <a href="/opskit/incident-cost-calculator.html">Incident Cost</a>
+        <a href="/opskit/oncall-load-calculator.html">On-Call Load</a>
+        <a href="/kits/">All Kits</a>
+        <a href="/focuskit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-budget-nav-focus">FocusKit</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="panel hero">
+        <h1>Error Budget Calculator <span class="badge">Burn risk</span></h1>
+        <p>Measure allowed failures, remaining budget, and current burn rate for a chosen window.</p>
+      </section>
+
+      <section class="panel card">
+        <div class="grid form-grid">
+          <div>
+            <label for="sloPct">SLO target (%)</label>
+            <input id="sloPct" type="number" min="90" max="99.999" step="0.001" value="99.9">
+          </div>
+          <div>
+            <label for="totalRequests">Total requests in window</label>
+            <input id="totalRequests" type="number" min="1" max="100000000000" step="1" value="1500000">
+          </div>
+          <div>
+            <label for="observedFailures">Observed failed requests</label>
+            <input id="observedFailures" type="number" min="0" max="100000000000" step="1" value="620">
+          </div>
+          <div>
+            <label for="elapsedDays">Elapsed days in current window</label>
+            <input id="elapsedDays" type="number" min="1" max="3650" step="1" value="12">
+          </div>
+          <div>
+            <label for="windowDays">Total window days</label>
+            <input id="windowDays" type="number" min="1" max="3650" step="1" value="30">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="calculateBtn">Calculate Error Budget</button>
+        </div>
+
+        <div id="result" class="result" aria-live="polite">
+          <strong>Your error budget summary will appear here.</strong>
+        </div>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>Interpretation Notes</h3>
+        <p>A burn rate above 1.0 means your current failure pace will exhaust the budget before window end. Sustained burn above 2.0 usually requires immediate action.</p>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>Related Tools</h3>
+        <p>Use the <a href="/opskit/sla-downtime-calculator.html?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-budget-related-sla">SLA Downtime Calculator</a> to choose initial targets, then align execution capacity with <a href="/focuskit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-budget-related-focus">FocusKit</a>.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const sloInput = document.getElementById('sloPct');
+    const totalRequestsInput = document.getElementById('totalRequests');
+    const observedFailuresInput = document.getElementById('observedFailures');
+    const elapsedDaysInput = document.getElementById('elapsedDays');
+    const windowDaysInput = document.getElementById('windowDays');
+    const result = document.getElementById('result');
+
+    function riskLevel(burnRate, remainingRatio) {
+      if (remainingRatio < 0 || burnRate >= 2) {
+        return { label: 'High', className: 'risk risk-high' };
+      }
+      if (burnRate >= 1 || remainingRatio < 25) {
+        return { label: 'Medium', className: 'risk risk-medium' };
+      }
+      return { label: 'Low', className: 'risk risk-low' };
+    }
+
+    function calculateBudget() {
+      const slo = Number(sloInput.value);
+      const totalRequests = Number(totalRequestsInput.value);
+      const observedFailures = Number(observedFailuresInput.value);
+      const elapsedDays = Number(elapsedDaysInput.value);
+      const windowDays = Number(windowDaysInput.value);
+
+      if (![slo, totalRequests, observedFailures, elapsedDays, windowDays].every(Number.isFinite)) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Please enter valid numbers for all fields.</strong>';
+        return;
+      }
+      if (slo < 90 || slo >= 100) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>SLO should be between 90 and 99.999.</strong>';
+        return;
+      }
+      if (!Number.isInteger(totalRequests) || totalRequests < 1) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Total requests must be a positive integer.</strong>';
+        return;
+      }
+      if (!Number.isInteger(observedFailures) || observedFailures < 0) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Observed failures must be zero or a positive integer.</strong>';
+        return;
+      }
+      if (!Number.isInteger(elapsedDays) || !Number.isInteger(windowDays) || elapsedDays < 1 || windowDays < 1 || elapsedDays > windowDays) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Elapsed days must be between 1 and total window days.</strong>';
+        return;
+      }
+
+      const errorBudget = totalRequests * (1 - slo / 100);
+      const remaining = errorBudget - observedFailures;
+      const usedPct = errorBudget > 0 ? (observedFailures / errorBudget) * 100 : 0;
+      const remainingPct = errorBudget > 0 ? (remaining / errorBudget) * 100 : 0;
+      const expectedDailyUse = errorBudget / windowDays;
+      const actualDailyUse = observedFailures / elapsedDays;
+      const burnRate = expectedDailyUse > 0 ? actualDailyUse / expectedDailyUse : 0;
+      const risk = riskLevel(burnRate, remainingPct);
+
+      result.className = remaining < 0 ? 'result warn' : 'result ok';
+      result.innerHTML = `
+        <strong>Error budget: ${Math.round(errorBudget).toLocaleString()} failed requests <span class="${risk.className}">${risk.label} risk</span></strong>
+        <ul>
+          <li>Observed failures: ${observedFailures.toLocaleString()} (${usedPct.toFixed(2)}% of budget)</li>
+          <li>Remaining budget: ${Math.round(remaining).toLocaleString()} (${remainingPct.toFixed(2)}%)</li>
+          <li>Expected daily budget use: ${expectedDailyUse.toFixed(2)} failures/day</li>
+          <li>Current daily failure pace: ${actualDailyUse.toFixed(2)} failures/day</li>
+          <li>Burn rate: ${burnRate.toFixed(2)}x</li>
+        </ul>
+        <div class="small">Tip: keep burn rate under 1.0 for sustained periods to avoid emergency freeze decisions later in the window.</div>
+      `;
+    }
+
+    document.getElementById('calculateBtn').addEventListener('click', calculateBudget);
+    calculateBudget();
+  </script>
+</body>
+</html>

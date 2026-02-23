@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://devtoolbox.dedyn.io/opskit/</loc>
+  </url>
+  <url>
+    <loc>https://devtoolbox.dedyn.io/opskit/sla-downtime-calculator.html</loc>
+  </url>
+  <url>
+    <loc>https://devtoolbox.dedyn.io/opskit/error-budget-calculator.html</loc>
+  </url>
+  <url>
+    <loc>https://devtoolbox.dedyn.io/opskit/incident-cost-calculator.html</loc>
+  </url>
+  <url>
+    <loc>https://devtoolbox.dedyn.io/opskit/oncall-load-calculator.html</loc>
+  </url>
+</urlset>

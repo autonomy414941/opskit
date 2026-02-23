@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLA Downtime Calculator - OpsKit</title>
+  <meta name="description" content="Convert uptime targets to downtime budgets with custom service windows in days.">
+  <meta name="keywords" content="SLA downtime calculator, uptime calculator, SLO target calculator">
+  <link rel="canonical" href="https://devtoolbox.dedyn.io/opskit/sla-downtime-calculator.html">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SLA Downtime Calculator - OpsKit">
+  <meta property="og:description" content="Translate uptime percentages into practical downtime budgets.">
+  <meta property="og:url" content="https://devtoolbox.dedyn.io/opskit/sla-downtime-calculator.html">
+  <meta property="og:site_name" content="OpsKit">
+  <meta property="og:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="SLA Downtime Calculator - OpsKit">
+  <meta name="twitter:description" content="Translate uptime percentages into practical downtime budgets.">
+  <meta name="twitter:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <link rel="stylesheet" href="/opskit/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "OpsKit SLA Downtime Calculator",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "url": "https://devtoolbox.dedyn.io/opskit/sla-downtime-calculator.html"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "OpsKit",
+            "item": "https://devtoolbox.dedyn.io/opskit/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "SLA Downtime Calculator",
+            "item": "https://devtoolbox.dedyn.io/opskit/sla-downtime-calculator.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <div class="site-wrap">
+    <header class="topbar">
+      <a class="brand" href="/opskit/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span>OpsKit</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/opskit/">Home</a>
+        <a href="/opskit/error-budget-calculator.html">Error Budget</a>
+        <a href="/opskit/incident-cost-calculator.html">Incident Cost</a>
+        <a href="/opskit/oncall-load-calculator.html">On-Call Load</a>
+        <a href="/kits/">All Kits</a>
+        <a href="/datekit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-sla-nav-date">DateKit</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="panel hero">
+        <h1>SLA Downtime Calculator <span class="badge">Target translator</span></h1>
+        <p>Convert uptime targets into concrete downtime budgets your team can monitor.</p>
+      </section>
+
+      <section class="panel card">
+        <div class="grid form-grid">
+          <div>
+            <label for="uptimePct">Target uptime (%)</label>
+            <input id="uptimePct" type="number" min="90" max="99.999" step="0.001" value="99.9">
+          </div>
+          <div>
+            <label for="windowDays">Window length (days)</label>
+            <input id="windowDays" type="number" min="1" max="3650" step="1" value="30">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="calculateBtn">Calculate Downtime Budget</button>
+        </div>
+
+        <div id="result" class="result" aria-live="polite">
+          <strong>Your downtime budget summary will appear here.</strong>
+        </div>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>How to Use This Number</h3>
+        <p>Compare allowed downtime against current incident history. If average monthly downtime already exceeds this budget, your target and reliability investment are misaligned.</p>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>Related Tools</h3>
+        <p>Pair this with the <a href="/opskit/error-budget-calculator.html?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-sla-related-budget">Error Budget Calculator</a> to monitor burn during the same period. For schedule and rollout window planning, use <a href="/datekit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-sla-related-date">DateKit</a>.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const uptimeInput = document.getElementById('uptimePct');
+    const windowDaysInput = document.getElementById('windowDays');
+    const result = document.getElementById('result');
+
+    function formatDuration(minutesTotal) {
+      const minutes = Math.max(0, minutesTotal);
+      const days = Math.floor(minutes / 1440);
+      const hours = Math.floor((minutes % 1440) / 60);
+      const mins = Math.round(minutes % 60);
+      const parts = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hours > 0 || days > 0) parts.push(`${hours}h`);
+      parts.push(`${mins}m`);
+      return parts.join(' ');
+    }
+
+    function calculateDowntime() {
+      const uptime = Number(uptimeInput.value);
+      const windowDays = Number(windowDaysInput.value);
+
+      if (!Number.isFinite(uptime) || !Number.isFinite(windowDays)) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Enter valid numeric values.</strong>';
+        return;
+      }
+      if (uptime < 90 || uptime >= 100) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Uptime target should be between 90 and 99.999.</strong>';
+        return;
+      }
+      if (!Number.isInteger(windowDays) || windowDays < 1 || windowDays > 3650) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Window days should be an integer between 1 and 3650.</strong>';
+        return;
+      }
+
+      const totalMinutes = windowDays * 24 * 60;
+      const downtimeMinutes = totalMinutes * (1 - uptime / 100);
+      const perDayMinutes = downtimeMinutes / windowDays;
+      const perWeekMinutes = perDayMinutes * 7;
+
+      result.className = 'result ok';
+      result.innerHTML = `
+        <strong>Allowed downtime: ${formatDuration(downtimeMinutes)} per ${windowDays}-day window</strong>
+        <ul>
+          <li>Equivalent minutes: ${downtimeMinutes.toFixed(2)} min</li>
+          <li>Average per day: ${perDayMinutes.toFixed(2)} min/day</li>
+          <li>Average per 7 days: ${formatDuration(perWeekMinutes)}</li>
+          <li>Required availability: ${(uptime / 100).toFixed(6)} ratio</li>
+        </ul>
+        <div class="small">Tip: reserve at least 20 to 30% of this budget for unknown incidents, not planned maintenance.</div>
+      `;
+    }
+
+    document.getElementById('calculateBtn').addEventListener('click', calculateDowntime);
+    calculateDowntime();
+  </script>
+</body>
+</html>

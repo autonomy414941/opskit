@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incident Cost Calculator - OpsKit</title>
+  <meta name="description" content="Estimate incident response labor cost, downtime business impact, and annualized reliability cost exposure.">
+  <meta name="keywords" content="incident cost calculator, downtime cost calculator, incident response planning">
+  <link rel="canonical" href="https://devtoolbox.dedyn.io/opskit/incident-cost-calculator.html">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Incident Cost Calculator - OpsKit">
+  <meta property="og:description" content="Model incident response and downtime cost impact.">
+  <meta property="og:url" content="https://devtoolbox.dedyn.io/opskit/incident-cost-calculator.html">
+  <meta property="og:site_name" content="OpsKit">
+  <meta property="og:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Incident Cost Calculator - OpsKit">
+  <meta name="twitter:description" content="Model incident response and downtime cost impact.">
+  <meta name="twitter:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <link rel="stylesheet" href="/opskit/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "OpsKit Incident Cost Calculator",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "url": "https://devtoolbox.dedyn.io/opskit/incident-cost-calculator.html"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "OpsKit",
+            "item": "https://devtoolbox.dedyn.io/opskit/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Incident Cost Calculator",
+            "item": "https://devtoolbox.dedyn.io/opskit/incident-cost-calculator.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <div class="site-wrap">
+    <header class="topbar">
+      <a class="brand" href="/opskit/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span>OpsKit</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/opskit/">Home</a>
+        <a href="/opskit/sla-downtime-calculator.html">SLA Downtime</a>
+        <a href="/opskit/error-budget-calculator.html">Error Budget</a>
+        <a href="/opskit/oncall-load-calculator.html">On-Call Load</a>
+        <a href="/kits/">All Kits</a>
+        <a href="/budgetkit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-incident-nav-budget">BudgetKit</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="panel hero">
+        <h1>Incident Cost Calculator <span class="badge">Impact model</span></h1>
+        <p>Estimate labor and downtime cost impact from recurring incidents to guide reliability investment.</p>
+      </section>
+
+      <section class="panel card">
+        <div class="grid form-grid">
+          <div>
+            <label for="incidentsPerMonth">Incidents per month</label>
+            <input id="incidentsPerMonth" type="number" min="0" max="10000" step="1" value="8">
+          </div>
+          <div>
+            <label for="durationMinutes">Average incident duration (minutes)</label>
+            <input id="durationMinutes" type="number" min="1" max="10080" step="1" value="65">
+          </div>
+          <div>
+            <label for="peopleInvolved">Responders involved per incident</label>
+            <input id="peopleInvolved" type="number" min="1" max="200" step="1" value="3">
+          </div>
+          <div>
+            <label for="hourlyRate">Blended labor rate per hour (USD)</label>
+            <input id="hourlyRate" type="number" min="1" max="10000" step="1" value="110">
+          </div>
+          <div>
+            <label for="revenueImpact">Estimated business impact per downtime hour (USD)</label>
+            <input id="revenueImpact" type="number" min="0" max="10000000" step="1" value="450">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="calculateBtn">Estimate Incident Cost</button>
+        </div>
+
+        <div id="result" class="result" aria-live="polite">
+          <strong>Your incident cost estimate will appear here.</strong>
+        </div>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>Interpretation Notes</h3>
+        <p>Use this estimate to compare the cost of incidents against reliability project cost. If expected annual incident cost exceeds project cost, remediation often has a clear business case.</p>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>Related Tools</h3>
+        <p>Use the <a href="/opskit/oncall-load-calculator.html?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-incident-related-oncall">On-Call Load Calculator</a> to estimate team fatigue pressure, then map budget tradeoffs in <a href="/budgetkit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-incident-related-budget">BudgetKit</a>.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const incidentsInput = document.getElementById('incidentsPerMonth');
+    const durationInput = document.getElementById('durationMinutes');
+    const peopleInput = document.getElementById('peopleInvolved');
+    const hourlyRateInput = document.getElementById('hourlyRate');
+    const revenueImpactInput = document.getElementById('revenueImpact');
+    const result = document.getElementById('result');
+
+    const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+    function calculateCost() {
+      const incidents = Number(incidentsInput.value);
+      const durationMinutes = Number(durationInput.value);
+      const people = Number(peopleInput.value);
+      const hourlyRate = Number(hourlyRateInput.value);
+      const revenueImpact = Number(revenueImpactInput.value);
+
+      if (![incidents, durationMinutes, people, hourlyRate, revenueImpact].every(Number.isFinite)) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Please enter valid numeric values in all fields.</strong>';
+        return;
+      }
+      if (!Number.isInteger(incidents) || incidents < 0) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Incidents per month must be zero or a positive integer.</strong>';
+        return;
+      }
+      if (durationMinutes < 1 || durationMinutes > 10080) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Duration should be between 1 and 10,080 minutes.</strong>';
+        return;
+      }
+      if (!Number.isInteger(people) || people < 1) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Responders involved must be a positive integer.</strong>';
+        return;
+      }
+      if (hourlyRate < 1 || revenueImpact < 0) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Labor rate must be positive and business impact cannot be negative.</strong>';
+        return;
+      }
+
+      const durationHours = durationMinutes / 60;
+      const laborPerIncident = durationHours * people * hourlyRate;
+      const businessPerIncident = durationHours * revenueImpact;
+      const totalPerIncident = laborPerIncident + businessPerIncident;
+
+      const monthlyLabor = laborPerIncident * incidents;
+      const monthlyBusiness = businessPerIncident * incidents;
+      const monthlyTotal = totalPerIncident * incidents;
+
+      const annualTotal = monthlyTotal * 12;
+      const annualLabor = monthlyLabor * 12;
+      const annualBusiness = monthlyBusiness * 12;
+
+      result.className = 'result ok';
+      result.innerHTML = `
+        <strong>Estimated monthly incident cost: ${usd.format(monthlyTotal)}</strong>
+        <ul>
+          <li>Per-incident cost: ${usd.format(totalPerIncident)} (${usd.format(laborPerIncident)} labor + ${usd.format(businessPerIncident)} business impact)</li>
+          <li>Monthly labor cost: ${usd.format(monthlyLabor)}</li>
+          <li>Monthly business impact: ${usd.format(monthlyBusiness)}</li>
+          <li>Annual labor cost: ${usd.format(annualLabor)}</li>
+          <li>Annual total impact: ${usd.format(annualTotal)}</li>
+        </ul>
+        <div class="small">Tip: compare annual incident impact with the cost of preventative reliability projects and staffing changes.</div>
+      `;
+    }
+
+    document.getElementById('calculateBtn').addEventListener('click', calculateCost);
+    calculateCost();
+  </script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>On-Call Load Calculator - OpsKit</title>
+  <meta name="description" content="Estimate per-engineer interrupt load from pages, handling time, and context switching overhead in an on-call rotation.">
+  <meta name="keywords" content="on-call load calculator, pager fatigue, alert burden calculator">
+  <link rel="canonical" href="https://devtoolbox.dedyn.io/opskit/oncall-load-calculator.html">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="On-Call Load Calculator - OpsKit">
+  <meta property="og:description" content="Quantify on-call interruption burden and per-engineer rotation pressure.">
+  <meta property="og:url" content="https://devtoolbox.dedyn.io/opskit/oncall-load-calculator.html">
+  <meta property="og:site_name" content="OpsKit">
+  <meta property="og:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="On-Call Load Calculator - OpsKit">
+  <meta name="twitter:description" content="Quantify on-call interruption burden and per-engineer rotation pressure.">
+  <meta name="twitter:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <link rel="stylesheet" href="/opskit/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "OpsKit On-Call Load Calculator",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "url": "https://devtoolbox.dedyn.io/opskit/oncall-load-calculator.html"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "OpsKit",
+            "item": "https://devtoolbox.dedyn.io/opskit/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "On-Call Load Calculator",
+            "item": "https://devtoolbox.dedyn.io/opskit/oncall-load-calculator.html"
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <div class="site-wrap">
+    <header class="topbar">
+      <a class="brand" href="/opskit/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span>OpsKit</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/opskit/">Home</a>
+        <a href="/opskit/sla-downtime-calculator.html">SLA Downtime</a>
+        <a href="/opskit/error-budget-calculator.html">Error Budget</a>
+        <a href="/opskit/incident-cost-calculator.html">Incident Cost</a>
+        <a href="/kits/">All Kits</a>
+        <a href="/sleepkit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-oncall-nav-sleep">SleepKit</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="panel hero">
+        <h1>On-Call Load Calculator <span class="badge">Rotation pressure</span></h1>
+        <p>Estimate interruption time and per-engineer pressure from your current paging pattern.</p>
+      </section>
+
+      <section class="panel card">
+        <div class="grid form-grid">
+          <div>
+            <label for="pagesPerWeek">Pages per week</label>
+            <input id="pagesPerWeek" type="number" min="0" max="10000" step="1" value="42">
+          </div>
+          <div>
+            <label for="handleMinutes">Average handling time per page (minutes)</label>
+            <input id="handleMinutes" type="number" min="1" max="720" step="1" value="18">
+          </div>
+          <div>
+            <label for="contextMinutes">Context-switch overhead per page (minutes)</label>
+            <input id="contextMinutes" type="number" min="0" max="240" step="1" value="12">
+          </div>
+          <div>
+            <label for="engineersOnRotation">Engineers in rotation</label>
+            <input id="engineersOnRotation" type="number" min="1" max="500" step="1" value="6">
+          </div>
+          <div>
+            <label for="rotationWeeks">Rotation cycle length (weeks)</label>
+            <input id="rotationWeeks" type="number" min="1" max="52" step="1" value="6">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="calculateBtn">Estimate On-Call Load</button>
+        </div>
+
+        <div id="result" class="result" aria-live="polite">
+          <strong>Your on-call load estimate will appear here.</strong>
+        </div>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>Interpretation Notes</h3>
+        <p>When average interruption exceeds 6 hours per engineer-week on call, many teams see quality and recovery problems. Use this output to support alerting cleanup and staffing changes.</p>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>Related Tools</h3>
+        <p>Use <a href="/sleepkit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-oncall-related-sleep">SleepKit</a> to plan recovery on heavy weeks and <a href="/focuskit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-oncall-related-focus">FocusKit</a> to protect deep-work blocks after high alert volume.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const pagesInput = document.getElementById('pagesPerWeek');
+    const handleInput = document.getElementById('handleMinutes');
+    const contextInput = document.getElementById('contextMinutes');
+    const engineersInput = document.getElementById('engineersOnRotation');
+    const rotationWeeksInput = document.getElementById('rotationWeeks');
+    const result = document.getElementById('result');
+
+    function toHours(minutes) {
+      return (minutes / 60).toFixed(2);
+    }
+
+    function classifyRisk(hoursPerEngineerWeek) {
+      if (hoursPerEngineerWeek >= 8) {
+        return { label: 'High', className: 'risk risk-high' };
+      }
+      if (hoursPerEngineerWeek >= 4) {
+        return { label: 'Medium', className: 'risk risk-medium' };
+      }
+      return { label: 'Low', className: 'risk risk-low' };
+    }
+
+    function calculateLoad() {
+      const pagesPerWeek = Number(pagesInput.value);
+      const handleMinutes = Number(handleInput.value);
+      const contextMinutes = Number(contextInput.value);
+      const engineers = Number(engineersInput.value);
+      const rotationWeeks = Number(rotationWeeksInput.value);
+
+      if (![pagesPerWeek, handleMinutes, contextMinutes, engineers, rotationWeeks].every(Number.isFinite)) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Please provide valid numbers for all fields.</strong>';
+        return;
+      }
+      if (!Number.isInteger(pagesPerWeek) || pagesPerWeek < 0) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Pages per week should be zero or a positive integer.</strong>';
+        return;
+      }
+      if (handleMinutes < 1 || contextMinutes < 0) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Handling time must be at least 1 minute and context overhead cannot be negative.</strong>';
+        return;
+      }
+      if (!Number.isInteger(engineers) || engineers < 1 || !Number.isInteger(rotationWeeks) || rotationWeeks < 1) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Rotation engineers and rotation weeks must be positive integers.</strong>';
+        return;
+      }
+
+      const minutesPerPage = handleMinutes + contextMinutes;
+      const weeklyInterruptMinutes = pagesPerWeek * minutesPerPage;
+      const pagesPerEngineerOnCallWeek = engineers > 0 ? pagesPerWeek / engineers : 0;
+      const weeklyMinutesPerEngineer = engineers > 0 ? weeklyInterruptMinutes / engineers : 0;
+      const cycleMinutesPerEngineer = weeklyMinutesPerEngineer * rotationWeeks;
+      const risk = classifyRisk(weeklyMinutesPerEngineer / 60);
+
+      result.className = 'result ok';
+      result.innerHTML = `
+        <strong>Estimated interruption: ${toHours(weeklyInterruptMinutes)} hours/week total <span class="${risk.className}">${risk.label} risk</span></strong>
+        <ul>
+          <li>Minutes per page (handling + context): ${minutesPerPage.toFixed(1)} min</li>
+          <li>Pages per engineer in on-call week: ${pagesPerEngineerOnCallWeek.toFixed(2)}</li>
+          <li>Interruption per engineer-week: ${toHours(weeklyMinutesPerEngineer)} hours</li>
+          <li>Interruption per engineer per ${rotationWeeks}-week cycle: ${toHours(cycleMinutesPerEngineer)} hours</li>
+        </ul>
+        <div class="small">Tip: reducing noisy pages usually creates a larger load improvement than shortening response time alone.</div>
+      `;
+    }
+
+    document.getElementById('calculateBtn').addEventListener('click', calculateLoad);
+    calculateLoad();
+  </script>
+</body>
+</html>
