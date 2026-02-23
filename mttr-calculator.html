@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTTR Calculator - OpsKit</title>
+  <meta name="description" content="Calculate MTTD, MTTA, MTTR, MTBF, and downtime share from your incident volume and response times.">
+  <meta name="keywords" content="mttr calculator, mttd calculator, mtta calculator, mtbf calculator, incident response metrics">
+  <link rel="canonical" href="https://devtoolbox.dedyn.io/opskit/mttr-calculator.html">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="MTTR Calculator - OpsKit">
+  <meta property="og:description" content="Estimate incident response metrics including MTTD, MTTA, MTTR, and MTBF.">
+  <meta property="og:url" content="https://devtoolbox.dedyn.io/opskit/mttr-calculator.html">
+  <meta property="og:site_name" content="OpsKit">
+  <meta property="og:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="MTTR Calculator - OpsKit">
+  <meta name="twitter:description" content="Estimate incident response metrics including MTTD, MTTA, MTTR, and MTBF.">
+  <meta name="twitter:image" content="https://devtoolbox.dedyn.io/og/default.png">
+  <link rel="stylesheet" href="/opskit/style.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "OpsKit MTTR Calculator",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "url": "https://devtoolbox.dedyn.io/opskit/mttr-calculator.html"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "OpsKit",
+            "item": "https://devtoolbox.dedyn.io/opskit/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "MTTR Calculator",
+            "item": "https://devtoolbox.dedyn.io/opskit/mttr-calculator.html"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is included in MTTR here?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "MTTR in this calculator is mean time to resolve after acknowledgement. End-to-end recovery time is shown separately as detection plus acknowledgement plus resolution."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I use this for weekly incident reviews?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Set period days to your review window and compare metric changes across weeks."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How should I interpret MTBF?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "MTBF here is average stable time between incidents using total period hours minus downtime hours divided by incident count."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <div class="site-wrap">
+    <header class="topbar">
+      <a class="brand" href="/opskit/">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span>OpsKit</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/opskit/">Home</a>
+        <a href="/opskit/sla-downtime-calculator.html">SLA Downtime</a>
+        <a href="/opskit/error-budget-calculator.html">Error Budget</a>
+        <a href="/opskit/oncall-load-calculator.html">On-Call Load</a>
+        <a href="/kits/">All Kits</a>
+        <a href="/focuskit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-mttr-nav-focus">FocusKit</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="panel hero">
+        <h1>MTTR Calculator <span class="badge">Incident metrics</span></h1>
+        <p>Estimate MTTD, MTTA, MTTR, end-to-end recovery time, and MTBF for your operations review window.</p>
+      </section>
+
+      <section class="panel card">
+        <div class="grid form-grid">
+          <div>
+            <label for="incidents">Incidents in period</label>
+            <input id="incidents" type="number" min="1" max="100000" step="1" value="24">
+          </div>
+          <div>
+            <label for="periodDays">Period length (days)</label>
+            <input id="periodDays" type="number" min="1" max="365" step="1" value="30">
+          </div>
+          <div>
+            <label for="detectMinutes">Mean time to detect (minutes)</label>
+            <input id="detectMinutes" type="number" min="0" max="1440" step="1" value="8">
+          </div>
+          <div>
+            <label for="ackMinutes">Mean time to acknowledge (minutes)</label>
+            <input id="ackMinutes" type="number" min="0" max="720" step="1" value="6">
+          </div>
+          <div>
+            <label for="resolveMinutes">Mean time to resolve (minutes)</label>
+            <input id="resolveMinutes" type="number" min="1" max="10080" step="1" value="52">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="calculateBtn">Calculate MTTR Metrics</button>
+        </div>
+
+        <div id="result" class="result" aria-live="polite">
+          <strong>Your incident response metrics will appear here.</strong>
+        </div>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>How to Use This</h3>
+        <p>Use this output in weekly reliability reviews to see where response time is spent: detection, acknowledgement, or repair. Optimize the largest bottleneck first.</p>
+      </section>
+
+      <section class="panel card" style="margin-top:14px;">
+        <h3>Related Tools</h3>
+        <p>Use <a href="/opskit/error-budget-calculator.html">Error Budget Calculator</a> to monitor reliability burn against SLO, and <a href="/opskit/incident-cost-calculator.html">Incident Cost Calculator</a> to estimate business impact from the same incident load.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const incidentsInput = document.getElementById('incidents');
+    const periodDaysInput = document.getElementById('periodDays');
+    const detectInput = document.getElementById('detectMinutes');
+    const ackInput = document.getElementById('ackMinutes');
+    const resolveInput = document.getElementById('resolveMinutes');
+    const result = document.getElementById('result');
+
+    function riskFromMttr(mttrMinutes) {
+      if (mttrMinutes >= 180) {
+        return { label: 'High', className: 'risk risk-high' };
+      }
+      if (mttrMinutes >= 60) {
+        return { label: 'Medium', className: 'risk risk-medium' };
+      }
+      return { label: 'Low', className: 'risk risk-low' };
+    }
+
+    function toHours(minutes) {
+      return minutes / 60;
+    }
+
+    function calculateMetrics() {
+      const incidents = Number(incidentsInput.value);
+      const periodDays = Number(periodDaysInput.value);
+      const detectMinutes = Number(detectInput.value);
+      const ackMinutes = Number(ackInput.value);
+      const resolveMinutes = Number(resolveInput.value);
+
+      if (![incidents, periodDays, detectMinutes, ackMinutes, resolveMinutes].every(Number.isFinite)) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Please enter valid numbers in all fields.</strong>';
+        return;
+      }
+
+      if (!Number.isInteger(incidents) || incidents < 1) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Incidents in period must be a positive integer.</strong>';
+        return;
+      }
+
+      if (!Number.isInteger(periodDays) || periodDays < 1) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Period length must be a positive integer number of days.</strong>';
+        return;
+      }
+
+      if (detectMinutes < 0 || ackMinutes < 0 || resolveMinutes < 1) {
+        result.className = 'result warn';
+        result.innerHTML = '<strong>Detection and acknowledgement cannot be negative, and resolve time must be at least 1 minute.</strong>';
+        return;
+      }
+
+      const endToEndMinutes = detectMinutes + ackMinutes + resolveMinutes;
+      const totalDowntimeMinutes = incidents * resolveMinutes;
+      const periodMinutes = periodDays * 24 * 60;
+      const periodHours = periodDays * 24;
+      const totalDowntimeHours = toHours(totalDowntimeMinutes);
+      const availabilityPct = periodMinutes > 0 ? Math.max(0, ((periodMinutes - totalDowntimeMinutes) / periodMinutes) * 100) : 0;
+      const mtbfHours = incidents > 0 ? Math.max(0, (periodHours - totalDowntimeHours) / incidents) : 0;
+      const incidentsPerWeek = incidents * (7 / periodDays);
+      const weeklyDowntimeHours = totalDowntimeHours * (7 / periodDays);
+      const risk = riskFromMttr(resolveMinutes);
+
+      result.className = 'result ok';
+      result.innerHTML = `
+        <strong>MTTR: ${resolveMinutes.toFixed(1)} minutes <span class="${risk.className}">${risk.label} risk</span></strong>
+        <ul>
+          <li>MTTD: ${detectMinutes.toFixed(1)} minutes</li>
+          <li>MTTA: ${ackMinutes.toFixed(1)} minutes</li>
+          <li>End-to-end recovery time: ${endToEndMinutes.toFixed(1)} minutes</li>
+          <li>Estimated MTBF: ${mtbfHours.toFixed(2)} hours</li>
+          <li>Incident rate: ${incidentsPerWeek.toFixed(2)} incidents/week</li>
+          <li>Downtime estimate: ${totalDowntimeHours.toFixed(2)} hours in period (${weeklyDowntimeHours.toFixed(2)} hours/week)</li>
+          <li>Availability estimate from MTTR inputs: ${availabilityPct.toFixed(3)}%</li>
+        </ul>
+        <div class="small">If MTTR is high, shorten diagnosis steps first, then optimize fix and rollback workflows.</div>
+      `;
+    }
+
+    document.getElementById('calculateBtn').addEventListener('click', calculateMetrics);
+    calculateMetrics();
+  </script>
+</body>
+</html>

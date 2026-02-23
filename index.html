@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpsKit - Free SLO, Error Budget, Incident Cost, and On-Call Load Calculators</title>
-  <meta name="description" content="Use free OpsKit calculators to plan reliability targets, estimate error budget burn, model incident cost, and quantify on-call load. Mobile friendly, no signup.">
-  <meta name="keywords" content="SLO calculator, SLA downtime calculator, error budget calculator, incident cost calculator, on-call calculator, reliability planning">
+  <title>OpsKit - Free SLO, MTTR, Error Budget, Incident Cost, and On-Call Load Calculators</title>
+  <meta name="description" content="Use free OpsKit calculators to plan reliability targets, estimate MTTR and MTBF, track error budget burn, model incident cost, and quantify on-call load.">
+  <meta name="keywords" content="SLO calculator, MTTR calculator, MTBF calculator, error budget calculator, incident cost calculator, on-call calculator">
   <link rel="canonical" href="https://devtoolbox.dedyn.io/opskit/">
   <meta name="robots" content="index,follow">
   <meta property="og:type" content="website">
@@ -56,6 +56,12 @@
             "position": 4,
             "name": "On-Call Load Calculator",
             "url": "https://devtoolbox.dedyn.io/opskit/oncall-load-calculator.html"
+          },
+          {
+            "@type": "ListItem",
+            "position": 5,
+            "name": "MTTR Calculator",
+            "url": "https://devtoolbox.dedyn.io/opskit/mttr-calculator.html"
           }
         ]
       },
@@ -104,6 +110,7 @@
         <a href="/opskit/error-budget-calculator.html">Error Budget</a>
         <a href="/opskit/incident-cost-calculator.html">Incident Cost</a>
         <a href="/opskit/oncall-load-calculator.html">On-Call Load</a>
+        <a href="/opskit/mttr-calculator.html">MTTR</a>
         <a href="/kits/">All Kits</a>
         <a href="/focuskit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-home-nav-focus">FocusKit</a>
         <a href="/datekit/?utm_source=opskit&amp;utm_medium=internal&amp;utm_campaign=crosspromo-top-organic&amp;utm_content=opskit-home-nav-date">DateKit</a>
@@ -114,7 +121,7 @@
     <main>
       <section class="panel hero">
         <h1>Reliability Planning Calculators</h1>
-        <p>Four focused tools to set service targets, monitor burn risk, estimate incident impact, and review rotation pressure.</p>
+        <p>Five focused tools to set service targets, track incident response speed, monitor burn risk, estimate impact, and review rotation pressure.</p>
       </section>
 
       <section class="grid tool-grid" aria-label="Calculator list">
@@ -157,11 +164,21 @@
             <li>Risk label for review meetings</li>
           </ul>
         </article>
+
+        <article class="card">
+          <h2><a href="/opskit/mttr-calculator.html">MTTR Calculator</a></h2>
+          <p>Estimate MTTD, MTTA, MTTR, MTBF, and downtime share from incident volume and response times.</p>
+          <ul>
+            <li>Detection, acknowledgement, and repair inputs</li>
+            <li>End-to-end recovery time output</li>
+            <li>Availability estimate from downtime totals</li>
+          </ul>
+        </article>
       </section>
 
       <section class="panel card" style="margin-top:14px;">
         <h3>OpsKit FAQ</h3>
-        <p><strong>Which calculator should I start with?</strong><br>Start with SLA Downtime for target-setting, then use Error Budget to track whether the target is sustainable.</p>
+        <p><strong>Which calculator should I start with?</strong><br>Start with SLA Downtime for target-setting, then use MTTR and Error Budget to track response speed and reliability burn.</p>
         <p><strong>How accurate is incident cost modeling?</strong><br>It is directional. Use it to compare scenarios and improve prioritization, not to produce final accounting numbers.</p>
         <p><strong>How often should we recalculate on-call load?</strong><br>Most teams should refresh it after rota changes, alerting policy shifts, or major product launches.</p>
       </section>
